@@ -53,6 +53,7 @@ if [ -z "$2" ]; then
 	echo "To select it at U-Boot, run the following commands from there: "
     echo "    $UBOOTCMD"
     echo "    save"
-    echo "    reset"
+#    echo "    reset"
+    echo "     run bootcmd"
 	echo " "
 fi

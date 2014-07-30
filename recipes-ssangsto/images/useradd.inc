@@ -9,7 +9,7 @@ EXTRA_USERS_PARAMS = "\
 "
 
 # TODO:
-# Add root password "isco123" (Disabled for initial development)
+# Add root password (Disabled for initial development)
 # Set admin home directory to location of log files? 
 #EXTRA_USERS_PARAMS += " \
 #   usermod -p 'H2vVqwFYQeOUM' root; \
