@@ -1,0 +1,58 @@
+#!/bin/sh
+#
+# ISCO utility
+# cprootimg <imageFile> [partition]
+# - imageFile: root filesystem image ext3 file
+# - partition: optional partition name. By default, tries copying to
+#   the eMMC or SD card where root isn't currently mounted.
+#
+
+if [ -n "$2" ]; then
+MMCDEV=/dev/"$2"
+else
+
+# Get root mount partition from kernel command line.
+# Assume rootfs is always in partition 2.
+Sd0P2Root=`grep -c mmcblk0p2 /proc/cmdline`
+#Sd1P2Root=`grep -c mmcblk1p2 /proc/cmdline`
+Sd1P2Root=`grep -c mmcblk0p4 /proc/cmdline`
+
+if [ $Sd0P2Root -eq 0 ]; then
+   MMCDEV=/dev/mmcblk0p2
+elif [ $Sd1P2Root -eq 0 ]; then
+#   MMCDEV=/dev/mmcblk1p2 
+   MMCDEV=/dev/mmcblk0p4 
+else
+   echo "Error: Did not find valid mount partition"
+   exit 1
+fi
+fi
+
+# Unmount partition
+umount $MMCDEV
+
+# Copy the image
+echo "Copying image to $MMCDEV"
+#dd if=$1 of=$MMCDEV bs=1024 || exit 1
+mkdir -p /root/mnt
+mount -t ext4 $MMCDEV /root/mnt
+rm -rf /root/mnt/*
+tar -xf $1 -C /root/mnt 
+
+# Resize partition for expansion space
+#FSSIZE=256M
+#resize2fs -f $MMCDEV $FSSIZE || exit 1
+
+echo " "
+echo "Image copy to $MMCDEV Success!"
+
+# Save command line for possible U-Boot script usage
+if [ -z "$2" ]; then
+	UBOOTCMD="setenv mmcroot \"$MMCDEV rootwait rw\""
+	echo $UBOOTCMD > /media/mmcblk1p1/mmcrootEnv.txt
+	echo "To select it at U-Boot, run the following commands from there: "
+    echo "    $UBOOTCMD"
+    echo "    save"
+    echo "    reset"
+	echo " "
+fi
