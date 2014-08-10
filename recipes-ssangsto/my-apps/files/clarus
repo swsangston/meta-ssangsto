@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+
+case "$1" in
+  start)
+    STARTMSG=" ISCO: Start Clarus Controller"
+    echo $STARTMSG
+    logger -p user.info $STARTMSG
+
+    # printk only warnings and above to console
+    echo "4 1 1 7" >/proc/sys/kernel/printk
+
+    # Start WiFi if device present (SABRE board)
+    HASWIFI=`lspci |grep -c WiFi`
+    if [ $HASWIFI -eq 1 ]; then
+        wpa_supplicant -B -Dwext -iwlan0 -c/home/root/wlan/wpa_supplicant.conf
+        udhcpc -b -p /var/run/udhcpc.wlan0.pid -i wlan0
+    fi
+
+    # create some directories
+    mkdir -p /home/root/images
+    mkdir -p /home/root/bin
+
+    # TODO: start the apps here
+
+    ;;
+  stop)
+    STOPMSG=" ISCO: Stop Clarus Controller"
+    echo $STOPMSG
+    logger -p user.info $STOPMSG
+
+    # TODO: stop the apps here
+
+    ;;
+  *)
+    echo "Usage: $0 {start|stop}"
+    exit 1
+esac
+
