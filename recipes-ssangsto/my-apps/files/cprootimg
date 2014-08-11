@@ -1,59 +1,97 @@
 #!/bin/sh
 #
-# ISCO utility
-# cprootimg <imageFile> [partition]
-# - imageFile: root filesystem image ext3 file
-# - partition: optional partition name. By default, tries copying to
-#   the eMMC or SD card where root isn't currently mounted.
+# ISCO utility: Copy root FS image to a partition
+#
+# cprootimg [imageFile] [partition]
+# - imageFile: root filesystem image file
+#   By default, will use the file images/rootfs.ext3 from
+#   the boot partition.  
+#
+# - partition: optional partition name. 
+#   By default, copies to designated root FS partition 
+#   where root isn't currently mounted.
 #
 
+# Partitions for SABRE Board
+# eMMC contains active U-Boot
+# Root FS in partition 2 on eMMC and SD card
+
+# SABRE
+#BOOTPART=mmcblk1p1
+#BOOTMOUNT=/media/$BOOTPART
+#ROOTPARTA=mmcblk0p2
+#ROOTPARTB=mmcblk1p2
+#DATAPART=mmcblk0p3
+
+# Beaglebone
+# Issue: can't mount FAT with current kernel!!!
+BOOTPART=mmcblk1p0
+BOOTMOUNT=/media/$BOOTPART
+ROOTPARTA=mmcblk0p2
+ROOTPARTB=mmcblk0p4
+DATAPART=mmcblk0p3
+
+FTYPE=tar.bz2
+#FTYPE=ext3
+
+# IMGSAVEDIR can't be in ROOTPARTA or ROOTPARTB
+IMGSAVEDIR=/home/root/images
+#IMGSAVEDIR=$BOOTMOUNT/images
+IMGNAME=rootfs.$FTYPE
+IMGFILE=$IMGSAVEDIR/$IMGNAME
+
+if [ -n "$1" ]; then
+    IMGFILE=$1
+fi
+
 if [ -n "$2" ]; then
-MMCDEV=/dev/"$2"
+    MMCDEV=/dev/"$2"
 else
+    # Muse use 'rdev' to get root because /proc/cmdline will show
+    # ramdisk mount.
+    ## Get currently mounted root partition from kernel command line
+    #IS_PARTA_ROOT=`grep -c $ROOTPARTA /proc/cmdline`
+    #IS_PARTB_ROOT=`grep -c $ROOTPARTB /proc/cmdline`
+    IS_PARTA_ROOT=`rdev | grep -c $ROOTPARTA`
+    IS_PARTB_ROOT=`rdev | grep -c $ROOTPARTB`
 
-# Get root mount partition from kernel command line.
-# Assume rootfs is always in partition 2.
-Sd0P2Root=`grep -c mmcblk0p2 /proc/cmdline`
-#Sd1P2Root=`grep -c mmcblk1p2 /proc/cmdline`
-Sd1P2Root=`grep -c mmcblk0p4 /proc/cmdline`
-
-if [ $Sd0P2Root -eq 0 ]; then
-   MMCDEV=/dev/mmcblk0p2
-elif [ $Sd1P2Root -eq 0 ]; then
-#   MMCDEV=/dev/mmcblk1p2 
-   MMCDEV=/dev/mmcblk0p4 
-else
-   echo "Error: Did not find valid mount partition"
-   exit 1
+    if [ $IS_PARTA_ROOT -eq 0 ]; then
+       MMCDEV=/dev/$ROOTPARTB
+    elif [ $IS_PARTB_ROOT -eq 0 ]; then
+       MMCDEV=/dev/$ROOTPARTA 
+    else
+       echo "Error: Did not find valid mount partition"
+       exit 1
+    fi
 fi
+
+# Copy image into the flash partition
+echo "Updating $MMCDEV with $IMGFILE ..."
+
+umount $MMCDEV 2>/dev/null
+
+if [ "$FTYPE" == "ext3" ]; then
+    dd if=$IMGFILE of=$MMCDEV bs=1024 || exit 1
+else # bz2
+    mkdir -p /media/newroot
+    umount /media/newroot 2>/dev/null
+    mount -t ext4 $MMCDEV /media/newroot
+    rm -rf /media/newroot/*
+    tar -xf $IMGFILE -m -C /media/newroot
+
+# Beaglebone: copy DTB files
+    cp $IMGSAVEDIR/*.dtb /media/newroot/boot
+
 fi
 
-# Unmount partition
-umount $MMCDEV
+echo "Image update Success!"
 
-# Copy the image
-echo "Copying image to $MMCDEV"
-#dd if=$1 of=$MMCDEV bs=1024 || exit 1
-mkdir -p /root/mnt
-mount -t ext4 $MMCDEV /root/mnt
-rm -rf /root/mnt/*
-tar -xf $1 -C /root/mnt 
-
-# Resize partition for expansion space
-#FSSIZE=256M
-#resize2fs -f $MMCDEV $FSSIZE || exit 1
+# Set file for initramfs to select the partition
+echo "$MMCDEV" >$IMGSAVEDIR/rootfsdev
 
 echo " "
-echo "Image copy to $MMCDEV Success!"
+echo " If U-Boot can't save env vars (bug), need to load ramdisk manually from there: "
+echo " "
+echo "  run loadramdisk; run ramboot"
+echo " "
 
-# Save command line for possible U-Boot script usage
-if [ -z "$2" ]; then
-	UBOOTCMD="setenv mmcroot \"$MMCDEV rootwait rw\""
-	echo $UBOOTCMD > /media/mmcblk1p1/mmcrootEnv.txt
-	echo "To select it at U-Boot, run the following commands from there: "
-    echo "    $UBOOTCMD"
-    echo "    save"
-#    echo "    reset"
-    echo "     run bootcmd"
-	echo " "
-fi

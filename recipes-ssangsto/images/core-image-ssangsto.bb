@@ -2,8 +2,10 @@ DESCRIPTION = "A console-only image for Beaglebone or iMx.6"
 
 #IMAGE_FEATURES += "splash"
 IMAGE_FEATURES += "debug-tweaks"
-#IMAGE_FEATURES += "splash ssh-server-openssh"
+#IMAGE_FEATURES += "ssh-server-openssh"
 IMAGE_FEATURES += "ssh-server-dropbear"
+
+IMAGE_FEATURES += "eclipse-debug"
 
 IMAGE_INSTALL = "\
     packagegroup-core-boot \
@@ -23,12 +25,16 @@ IMAGE_INSTALL = "\
 
 IMAGE_INSTALL += "\
     nodejs \
-    vsftpd \
     gdb \
 	gdbserver \
-    service \
+    strace \
     my-apps \
+    kernel-modules \
     "
+#    vsftpd \
+#    service \
+#
+
 
 inherit core-image
 

@@ -9,6 +9,7 @@ IMAGE_INSTALL = "\
     init-ifupdown \
     e2fsprogs-e2fsck \ 
 "
+# e2fsprogs-mke2fs
 
 # Do not pollute the initrd image with rootfs features
 IMAGE_FEATURES = ""

@@ -11,9 +11,6 @@ tmpfs                /var/volatile        tmpfs      defaults              0  0
 # Mount root home directory on separate partition
 /dev/mmcblk0p3 	/home/root	auto defaults	0  2
 
-# Second root FS for upgrade
-/dev/mmcblk0p4 /upgroot auto defaults 0 3
-
 # uncomment this if your device has a SD/MMC/Transflash slot
 #/dev/mmcblk0p1       /media/card          auto       defaults,sync,noauto  0  0
 

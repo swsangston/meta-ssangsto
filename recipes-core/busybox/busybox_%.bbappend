@@ -4,4 +4,5 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 SRC_URI += "file://crond.cfg"
 SRC_URI += "file://ntpd.cfg"
+SRC_URI += "file://rdev.cfg"
 

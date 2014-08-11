@@ -10,6 +10,8 @@ ROOTPARTA=mmcblk0p2
 ROOTPARTB=mmcblk0p4
 DATAFSTYPE=ext4
 DATAPART=mmcblk0p3
+#DATAFSTYPE=vfat
+#DATAPART=mmcblk0p1
 IMGSAVEDIR=/bootdata/images
 FSERROR=0
 
@@ -117,8 +119,8 @@ hostname ramboot
 /etc/init.d/dropbear start
 
 # Run a shell 
-echo "RAM Boot Maintenance and Recovery Shell" > /etc/issue
-/sbin/getty 115200 ttyO0 -w
+echo "RAM Boot Recovery Shell" > /etc/issue
+/sbin/getty 115200 ttyO0
 
 /etc/init.d/dropbear stop
 /etc/init.d/networking stop
