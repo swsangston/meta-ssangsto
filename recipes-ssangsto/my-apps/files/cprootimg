@@ -52,12 +52,12 @@ else
     ## Get currently mounted root partition from kernel command line
     #IS_PARTA_ROOT=`grep -c $ROOTPARTA /proc/cmdline`
     #IS_PARTB_ROOT=`grep -c $ROOTPARTB /proc/cmdline`
-    IS_PARTA_ROOT=`rdev | grep -c $ROOTPARTA`
-    IS_PARTB_ROOT=`rdev | grep -c $ROOTPARTB`
+    IS_PARTA_ROOT=`/usr/sbin/rdev | grep -c $ROOTPARTA`
+    IS_PARTB_ROOT=`/usr/sbin/rdev | grep -c $ROOTPARTB`
 
-    if [ $IS_PARTA_ROOT -eq 0 ]; then
+    if [ $IS_PARTA_ROOT -eq 1 ]; then
        MMCDEV=/dev/$ROOTPARTB
-    elif [ $IS_PARTB_ROOT -eq 0 ]; then
+    elif [ $IS_PARTB_ROOT -eq 1 ]; then
        MMCDEV=/dev/$ROOTPARTA 
     else
        echo "Error: Did not find valid mount partition"
