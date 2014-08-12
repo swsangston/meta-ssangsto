@@ -52,8 +52,8 @@ else
     ## Get currently mounted root partition from kernel command line
     #IS_PARTA_ROOT=`grep -c $ROOTPARTA /proc/cmdline`
     #IS_PARTB_ROOT=`grep -c $ROOTPARTB /proc/cmdline`
-    IS_PARTA_ROOT=`/usr/sbin/rdev | grep -c $ROOTPARTA`
-    IS_PARTB_ROOT=`/usr/sbin/rdev | grep -c $ROOTPARTB`
+    IS_PARTA_ROOT=`/usr/sbin/rdev -r | grep -c $ROOTPARTA`
+    IS_PARTB_ROOT=`/usr/sbin/rdev -r | grep -c $ROOTPARTB`
 
     if [ $IS_PARTA_ROOT -eq 1 ]; then
        MMCDEV=/dev/$ROOTPARTB

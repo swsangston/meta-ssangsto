@@ -10,6 +10,9 @@ IMAGE_FEATURES += "eclipse-debug"
 IMAGE_INSTALL = "\
     packagegroup-core-boot \
     packagegroup-core-full-cmdline \
+    wpa-supplicant \
+    usbutils \
+    linux-firmware \
     ${CORE_IMAGE_EXTRA_INSTALL} \
     "
 
