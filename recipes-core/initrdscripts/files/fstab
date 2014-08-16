@@ -1,0 +1,2 @@
+# Empty fstab to prevent mounting any drives at initramfs startup
+

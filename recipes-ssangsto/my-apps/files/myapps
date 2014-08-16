@@ -3,7 +3,7 @@
 
 case "$1" in
   start)
-    STARTMSG=" ISCO: Start Clarus Controller"
+    STARTMSG=" Start Application "
     echo $STARTMSG
     logger -p user.info $STARTMSG
 
@@ -11,9 +11,11 @@ case "$1" in
     echo "4 1 1 7" >/proc/sys/kernel/printk
 
     # Start WiFi if device present (SABRE board)
-    HASWIFI=`lspci |grep -c WiFi`
-    if [ $HASWIFI -eq 1 ]; then
-        wpa_supplicant -B -Dwext -iwlan0 -c/home/root/wlan/wpa_supplicant.conf
+    if [ -d "/sys/class/net/wlan0" ]; then
+        echo " Starting Wireless "
+        # -Dwext does not work for D-Link 150 on BeagleBone
+        #wpa_supplicant -B -Dwext -iwlan0 -c/home/root/wlan/wpa_supplicant.conf
+        wpa_supplicant -B -iwlan0 -c/home/root/wlan/wpa_supplicant.conf
         udhcpc -b -p /var/run/udhcpc.wlan0.pid -i wlan0
     fi
 
@@ -25,7 +27,7 @@ case "$1" in
 
     ;;
   stop)
-    STOPMSG=" ISCO: Stop Clarus Controller"
+    STOPMSG=" Stop Application "
     echo $STOPMSG
     logger -p user.info $STOPMSG
 

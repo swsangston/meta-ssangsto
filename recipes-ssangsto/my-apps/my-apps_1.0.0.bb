@@ -10,7 +10,7 @@ inherit update-rc.d
 INITSCRIPT_NAME = "clarus"
 INITSCRIPT_PARAMS = "defaults 98 1"
 
-SRC_URI += "file://clarus"
+SRC_URI += "file://myapps"
 
 # The application's "make install" will copy the tar.gz file here.
 # TODO: Change so that this recipe gets the files from apps/bin directory?

@@ -5,16 +5,16 @@ IMAGE_FEATURES += "debug-tweaks"
 #IMAGE_FEATURES += "ssh-server-openssh"
 IMAGE_FEATURES += "ssh-server-dropbear"
 
-IMAGE_FEATURES += "eclipse-debug"
+#IMAGE_FEATURES += "eclipse-debug"
 
 IMAGE_INSTALL = "\
     packagegroup-core-boot \
     packagegroup-core-full-cmdline \
     wpa-supplicant \
-    usbutils \
-    linux-firmware \
-    ${CORE_IMAGE_EXTRA_INSTALL} \
+    kernel-modules  \
     "
+
+#    linux-firmware 
 
 # Note: lighttpd is already included above
 
@@ -32,12 +32,11 @@ IMAGE_INSTALL += "\
 	gdbserver \
     strace \
     my-apps \
-    kernel-modules \
     "
 #    vsftpd \
-#    service \
 #
 
+# iperf : not in standard Yocto: may be in meta-openembedded
 
 inherit core-image
 

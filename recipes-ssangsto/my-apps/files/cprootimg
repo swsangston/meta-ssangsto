@@ -2,7 +2,8 @@
 #
 # ISCO utility: Copy root FS image to a partition
 #
-# cprootimg [imageFile] [partition]
+# cprootimg [filetype][imageFile] [partition]
+# - filetype: bz2 for bz2 image; otherwise ext3/4
 # - imageFile: root filesystem image file
 #   By default, will use the file images/rootfs.ext3 from
 #   the boot partition.  
@@ -13,26 +14,17 @@
 #
 
 # Partitions for SABRE Board
-# eMMC contains active U-Boot
-# Root FS in partition 2 on eMMC and SD card
-
-# SABRE
-#BOOTPART=mmcblk1p1
-#BOOTMOUNT=/media/$BOOTPART
-#ROOTPARTA=mmcblk0p2
-#ROOTPARTB=mmcblk1p2
-#DATAPART=mmcblk0p3
-
-# Beaglebone
-# Issue: can't mount FAT with current kernel!!!
+# eMMC is mmcblk0 if no SD card inserted.
 BOOTPART=mmcblk1p0
 BOOTMOUNT=/media/$BOOTPART
 ROOTPARTA=mmcblk0p2
-ROOTPARTB=mmcblk0p4
-DATAPART=mmcblk0p3
+ROOTPARTB=mmcblk0p3
+DATAPART=mmcblk0p4
 
-FTYPE=tar.bz2
-#FTYPE=ext3
+FTYPE=ext3
+if [ "$1" == "bz2" ]; then
+    FTYPE=tar.bz2
+fi    
 
 # IMGSAVEDIR can't be in ROOTPARTA or ROOTPARTB
 IMGSAVEDIR=/home/root/images
@@ -40,18 +32,14 @@ IMGSAVEDIR=/home/root/images
 IMGNAME=rootfs.$FTYPE
 IMGFILE=$IMGSAVEDIR/$IMGNAME
 
-if [ -n "$1" ]; then
-    IMGFILE=$1
+if [ -n "$2" ]; then
+    IMGFILE=$2
 fi
 
-if [ -n "$2" ]; then
-    MMCDEV=/dev/"$2"
+if [ -n "$3" ]; then
+    MMCDEV=/dev/"$3"
 else
-    # Muse use 'rdev' to get root because /proc/cmdline will show
-    # ramdisk mount.
-    ## Get currently mounted root partition from kernel command line
-    #IS_PARTA_ROOT=`grep -c $ROOTPARTA /proc/cmdline`
-    #IS_PARTB_ROOT=`grep -c $ROOTPARTB /proc/cmdline`
+    # Save image in partition that isn't currently the root device
     IS_PARTA_ROOT=`/usr/sbin/rdev -r | grep -c $ROOTPARTA`
     IS_PARTB_ROOT=`/usr/sbin/rdev -r | grep -c $ROOTPARTB`
 
@@ -71,11 +59,17 @@ echo "Updating $MMCDEV with $IMGFILE ..."
 umount $MMCDEV 2>/dev/null
 
 if [ "$FTYPE" == "ext3" ]; then
-    dd if=$IMGFILE of=$MMCDEV bs=1024 || exit 1
-else # bz2
+    dd if=$IMGFILE of=$MMCDEV bs=1M
+    
+    if [ $? -ne 0 ]; then 
+        echo "Filesystem copy failed!"
+        exit 1
+    fi 
+else 
+    # extract bz2 to existing FS, for development only
     mkdir -p /media/newroot
     umount /media/newroot 2>/dev/null
-    mount -t ext4 $MMCDEV /media/newroot
+    mount -t ext4 $MMCDEV /media/newroot || exit 1
     rm -rf /media/newroot/*
     tar -xf $IMGFILE -m -C /media/newroot
 
@@ -88,10 +82,4 @@ echo "Image update Success!"
 
 # Set file for initramfs to select the partition
 echo "$MMCDEV" >$IMGSAVEDIR/rootfsdev
-
-echo " "
-echo " If U-Boot can't save env vars (bug), need to load ramdisk manually from there: "
-echo " "
-echo "  run loadramdisk; run ramboot"
-echo " "
 

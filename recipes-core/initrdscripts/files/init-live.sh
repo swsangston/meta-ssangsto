@@ -1,37 +1,25 @@
 #!/bin/sh
 #
-# To change root FS before reboot, e.g.
-# echo "/dev/mmcblk0p2" >/home/root/rootfsdev
+# /init script for initramfs
 #
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 ROOTPARTA=mmcblk0p2
-ROOTPARTB=mmcblk0p4
+ROOTPARTB=mmcblk0p3
 DATAFSTYPE=ext4
-DATAPART=mmcblk0p3
+DATAPART=mmcblk0p4
 #DATAFSTYPE=vfat
 #DATAPART=mmcblk0p1
 IMGSAVEDIR=/bootdata/images
+TTYDEV=ttyO0
 FSERROR=0
+SELROOTDEV="none"
 
-check_fs()
-{
-    FSERROR=0
-    e2fsck -p $ROOTDEV
+# Add -f to reboot since there's no sysV shutdown script
+reboot_cmd="/sbin/reboot -f"
 
-    RET=$?
-    if [ $RET -eq 2 ]; then
-        # TODO: Should maintain a nonvolatile error count and give up if exceeded
-        echo "INITRAMFS: Filesystem errors corrected, requires reboot"
-        /sbin/reboot -n -f
-    elif [ $RET -ge 3 ]; then
-        echo "INITRAMFS: ERROR: $ROOTDEV FS check failed!"
-        FSERROR=1
-    fi
-}
-
-## Start of init script
+# Make system directory nodes
 mkdir -p proc
 mkdir -p sys
 mount -t proc proc /proc
@@ -45,73 +33,87 @@ mkdir -p /var/run/udev
 echo /dev/mmc* >>/etc/udev/mount.blacklist
 /etc/init.d/udev start
 
-# Check for valid root filesystem and pass control to it.
+# Mount boot image flags directory
 mkdir /bootdata
 mount -t $DATAFSTYPE /dev/$DATAPART /bootdata
 
+# Check for valid root filesystem and pass control to it.
 if [ -f $IMGSAVEDIR/rootfsdev ]; then
-    ROOTDEV=`cat $IMGSAVEDIR/rootfsdev`  
+    reqrootdev=`cat $IMGSAVEDIR/rootfsdev`
 
-    # Check validity of selection
-    if [ "$ROOTDEV" != "/dev/$ROOTPARTA" ] && [ "$ROOTDEV" != "/dev/$ROOTPARTB" ]; then
+    # Check if selection is valid
+    if [ "$reqrootdev" != "/dev/$ROOTPARTA" ] && [ "$reqrootdev" != "/dev/$ROOTPARTB" ]; then
         echo "INITRAMFS: ERROR: Invalid Root Partition Selected!"
     else
-        echo "INITRAMFS: Root FS device $ROOTDEV was selected"
+        echo "INITRAMFS: Root FS device $reqrootdev was selected"
 
-        # Perform intergrity check on selected root FS
-        check_fs
-
-        if [ $FSERROR -ne 0 ]; then
-            # TODO: Try reverting to the other FS upon failure.
-            # Only revert when an update was actually attempted?
-            # A revert also requires that the kernel be reverted if
-            # both were changed. Need to add logic for that.
-            # For now, just exiting to shell.
-            #if [ "$ROOTDEV" == "/dev/$ROOTPARTA" ]; then
-            # ROOTDEV = /dev/$ROOTPARTB
-            #else
-            # ROOTDEV = /dev/$ROOTPARTA
-            # fi
-            #swap_rootdev
-            #check_fs
-            echo "FS check failed"
-        fi
-
-        # Mount the root filesystem.
-        mkdir /newroot
-        mount -t ext4 $ROOTDEV /newroot
-
-        if [ $? -ne 0 ]; then
-            echo "INITRAMFS: ERROR: Failed to mount $ROOTDEV!"
+        # Perform integrity check on selected root FS.
+        # Returns 0 if good, 1 if errors were corrected, >1 if bad
+        e2fsck -p $reqrootdev
+        
+        FSERROR=$?
+        if [ $FSERROR -le 1 ]; then
+            SELROOTDEV=$reqrootdev
         else
-            # Switch to the root FS
-            echo "INITRAMFS: Switching root to $ROOTDEV ..."
+            echo "INITRAMFS: Filesystem check failed on $reqrootdev! (error=$FSERROR)"
 
-            # Temporarily move everything else mounted to old root.
-            mount --move /sys /newroot/sys
-            mount --move /proc /newroot/proc
-            mount --move /dev /newroot/dev
+            # Try reverting to the other partition
+            if [ "$reqrootdev" == "/dev/$ROOTPARTA" ]; then
+                ALTROOTDEV="/dev/$ROOTPARTB"
+            else
+                ALTROOTDEV="/dev/$ROOTPARTA"
+            fi
 
-            # Now switch to the new filesystem and run /sbin/init from it.
-            exec switch_root /newroot /sbin/init
+            echo "INITRAMFS: Trying alternate root FS $ALTROOTDEV"
+            e2fsck -p $ALTROOTDEV
+            FSERROR=$?
+            if [ $FSERROR -le 1 ]; then
+                SELROOTDEV=$ALTROOTDEV
+            else
+                echo "INITRAMFS: Filesystem check failed on $ALTROOTDEV! (error=$FSERROR)"          
+            fi
         fi
+
+        if [ $FSERROR -le 1 ]; then
+            # Mount the root filesystem.
+            mkdir /newroot
+            mount -t ext4 $SELROOTDEV /newroot
+
+            if [ $? -ne 0 ]; then
+                echo "INITRAMFS: ERROR: Failed to mount $SELROOTDEV!"
+            else
+                # Switch to the root FS
+                echo "INITRAMFS: Switching root to $SELROOTDEV ..."
+
+                umount /dev/$DATAPART 
+
+                # Temporarily move everything else mounted to old root.
+                mount --move /sys /newroot/sys
+                mount --move /proc /newroot/proc
+                mount --move /dev /newroot/dev
+
+                # Now switch to the new filesystem and run /sbin/init from it.
+                exec switch_root /newroot /sbin/init
+            fi
+        fi      
     fi
 else
     echo "INITRAMFS: ERROR: Root device selection not found!"
 fi
 
-echo "INITRAMFS: Start networking and recovery shell"
+# Valid FS not found: Start recovery shell.
+echo "INITRAMFS: Start recovery shell"
 
-# Valid FS not found: Start network and recovery shell.
-# Create interfaces file. (should be done in a recipe at build time)
-echo "auto lo" > /etc/network/interfaces
-echo "iface lo inet loopback" >> /etc/network/interfaces
-echo "auto eth0" >> /etc/network/interfaces
-echo "iface eth0 inet static" >> /etc/network/interfaces
-echo "    address 10.0.1.2" >> /etc/network/interfaces                
-echo "    netmask 255.255.255.0" >> /etc/network/interfaces                  
-echo "    network 10.0.1.0" >> /etc/network/interfaces                    
-echo "    gateway 10.0.1.1" >> /etc/network/interfaces 
+# Make a 'reboot' alias for the user
+mkdir -p /usr/local/bin
+echo $reboot_cmd > /usr/local/bin/reboot
+chmod 755 /usr/local/bin/reboot
+
+# Mount pseudo-terminal nodes
+mkdir -p -m 755 /dev/pts
+mount devpts /dev/pts -t devpts
+
+# Start networking
 hostname ramboot
 /etc/init.d/networking start
 
@@ -120,7 +122,7 @@ hostname ramboot
 
 # Run a shell 
 echo "RAM Boot Recovery Shell" > /etc/issue
-/sbin/getty 115200 ttyO0
+/sbin/getty 115200 $TTYDEV
 
 /etc/init.d/dropbear stop
 /etc/init.d/networking stop
@@ -128,5 +130,4 @@ echo "RAM Boot Recovery Shell" > /etc/issue
 
 echo "INITRAMFS: Exit $0: Rebooting ..."
 sleep 2
-/sbin/reboot -n -f
-
+$reboot_cmd
