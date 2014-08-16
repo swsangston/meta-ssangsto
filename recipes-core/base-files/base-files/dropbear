@@ -1,0 +1,4 @@
+# Keep SSH keys in root dir to be preserved across upgrades
+DROPBEAR_RSAKEY=/home/root/.dropbear_rsa_host_key
+#DROPBEAR_DSSKEY=/home/root/.dropbear_dss_host_key
+
