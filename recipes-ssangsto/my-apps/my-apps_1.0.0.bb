@@ -25,7 +25,7 @@ do_install() {
 	install -d ${D}${bindir}
     install -d ${D}${sysconfdir}/init.d
 
-	install -m 0755 ${WORKDIR}/clarus ${D}${sysconfdir}/init.d	
+	install -m 0755 ${WORKDIR}/myapps ${D}${sysconfdir}/init.d	
 	install -m 0755 ${WORKDIR}/cprootimg ${D}${bindir}
 
     # Install application files to /usr/bin
