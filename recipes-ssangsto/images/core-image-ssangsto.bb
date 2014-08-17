@@ -14,27 +14,19 @@ IMAGE_INSTALL = "\
     kernel-modules  \
     "
 
+# Required for rtlwifi but installs firmware for all devices (>50M). 
 #    linux-firmware 
 
 # Note: lighttpd is already included above
 
-# QA issue when installing vsftp (doesn't occur with isco)
-#ERROR: QA Issue: vsftpd: Files/directories were installed but not shipped
-#  /run
-#  /run/vsftpd
-#  /run/vsftpd/empty
-#ERROR: QA run found fatal errors. Please consider fixing them.
-#ERROR: Function failed: do_package_qa
-
 IMAGE_INSTALL += "\
     nodejs \
+    vsftpd \
     gdb \
 	gdbserver \
     strace \
     my-apps \
     "
-#    vsftpd \
-#
 
 # iperf : not in standard Yocto: may be in meta-openembedded
 
