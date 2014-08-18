@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# ISCO utility: Copy root FS image to a partition
+# Utility: Copy root FS image to a partition
 #
 # cprootimg [filetype][imageFile] [partition]
 # - filetype: bz2 for bz2 image; otherwise ext3/4

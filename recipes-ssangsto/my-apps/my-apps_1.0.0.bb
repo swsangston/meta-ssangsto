@@ -5,19 +5,17 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Proprietary;md5=0557f9d92cf58f2
 
 PR="r0"
 
-# Install rc.d links to start clarus '98th' at runlevel 2-5, and stop 1st at RL 6.
+# Install rc.d links to start '98th' at runlevel 2-5, and stop 1st at RL 6.
 inherit update-rc.d
-INITSCRIPT_NAME = "clarus"
+INITSCRIPT_NAME = "myapps"
 INITSCRIPT_PARAMS = "defaults 98 1"
 
 SRC_URI += "file://myapps"
+SRC_URI += "file://update-rootfs"
 
 # The application's "make install" will copy the tar.gz file here.
 # TODO: Change so that this recipe gets the files from apps/bin directory?
 #SRC_URI += "file://apps-bin-1.0.tar.gz"
-
-# Debug script to update root FS
-SRC_URI += "file://cprootimg"
 
 FILESEXTRAPATHS := "${THISDIR}/files:"
 
@@ -26,14 +24,12 @@ do_install() {
     install -d ${D}${sysconfdir}/init.d
 
 	install -m 0755 ${WORKDIR}/myapps ${D}${sysconfdir}/init.d	
-	install -m 0755 ${WORKDIR}/cprootimg ${D}${bindir}
+	install -m 0755 ${WORKDIR}/$update-rootfs {D}${bindir}
 
     # Install application files to /usr/bin
 #    for f in ${WORKDIR}/bin/*;	do
 #		install -m 0755 ${f} ${D}${bindir}
 #	done
-	
-#	install -m 0755 ${WORKDIR}/fpgautil ${D}${bindir}
 }
 
 

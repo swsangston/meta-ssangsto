@@ -25,9 +25,6 @@ mkdir -p sys
 mount -t proc proc /proc
 mount -t sysfs sysfs /sys
 
-# Remove the default fstab (should be done in a recipe)
-rm /etc/fstab
-
 # Start udev. Disable MMC automount
 mkdir -p /var/run/udev
 echo /dev/mmc* >>/etc/udev/mount.blacklist
