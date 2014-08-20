@@ -24,7 +24,7 @@ do_install() {
     install -d ${D}${sysconfdir}/init.d
 
 	install -m 0755 ${WORKDIR}/myapps ${D}${sysconfdir}/init.d	
-	install -m 0755 ${WORKDIR}/$update-rootfs {D}${bindir}
+	install -m 0755 ${WORKDIR}/update-rootfs ${D}${bindir}
 
     # Install application files to /usr/bin
 #    for f in ${WORKDIR}/bin/*;	do
