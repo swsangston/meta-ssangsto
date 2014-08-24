@@ -22,6 +22,9 @@ IMAGE_INSTALL = "\
 IMAGE_INSTALL += "\
     nodejs \
     vsftpd \
+	lighttpd-module-auth \
+	python-netserver \
+    tzdata \
     gdb \
 	gdbserver \
     strace \

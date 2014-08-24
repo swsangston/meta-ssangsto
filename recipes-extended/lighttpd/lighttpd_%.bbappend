@@ -2,6 +2,7 @@
 # Add the CGI module
 RDEPENDS_${PN} += " \
                lighttpd-module-cgi \
+               lighttpd-module-auth \
 			   "
 
 # Append our layer's path to override files			   

@@ -13,11 +13,10 @@ INITSCRIPT_PARAMS = "defaults 98 1"
 SRC_URI += "file://myapps"
 SRC_URI += "file://update-rootfs"
 
-# The application's "make install" will copy the tar.gz file here.
-# TODO: Change so that this recipe gets the files from apps/bin directory?
 #SRC_URI += "file://apps-bin-1.0.tar.gz"
 
-FILESEXTRAPATHS := "${THISDIR}/files:"
+FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+#FILESEXTRAPATHS_prepend := "${THISDIR}/files:${APPSDIR}/bin:"
 
 do_install() {
 	install -d ${D}${bindir}
