@@ -28,6 +28,7 @@ IMAGE_INSTALL += "\
     gdb \
 	gdbserver \
     strace \
+	nano \
     my-apps \
     "
 
