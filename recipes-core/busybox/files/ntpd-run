@@ -1,0 +1,7 @@
+#!/bin/sh
+# Keep respawning Busybox ntpd because it exits at startup if peer is 
+# not reachable, even in daemon mode.
+while true; do
+    ntpd -n -S /etc/ntp.script -p $1 >/var/log/ntpd.log 2>&1
+    sleep 30
+done

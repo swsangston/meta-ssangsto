@@ -1,0 +1,10 @@
+--- glog-0.3.3/src/logging.cc	2015-01-06 14:19:37.021899804 -0600
++++ glog-0.3.3/new_src/logging.cc	2015-01-06 14:21:23.913900207 -0600
+@@ -1199,6 +1199,7 @@
+   data_->outvec_ = NULL;
+   WallTime now = WallTime_Now();
+   data_->timestamp_ = static_cast<time_t>(now);
++  tzset(); // ISCO added
+   localtime_r(&data_->timestamp_, &data_->tm_time_);
+   int usecs = static_cast<int>((now - data_->timestamp_) * 1000000);
+   RawLog__SetLastTime(data_->tm_time_, usecs);

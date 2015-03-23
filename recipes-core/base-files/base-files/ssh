@@ -1,0 +1,4 @@
+# Set host key location to data partition
+SYSCONFDIR=/home/root/.sshd
+SSHD_OPTS="-h$SYSCONFDIR/ssh_host_rsa_key -h$SYSCONFDIR/ssh_host_dsa_key -h$SYSCONFDIR/ssh_host_ecdsa_key -h$SYSCONFDIR/ssh_host_ed25519_key"
+

@@ -5,3 +5,4 @@
 # Note that the default vsftpd pam config also checks /etc/vsftpd.ftpusers
 # for users that are denied.
 admin
+iscoeng

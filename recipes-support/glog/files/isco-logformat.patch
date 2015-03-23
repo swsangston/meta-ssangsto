@@ -1,0 +1,79 @@
+Index: glog-0.3.3/src/logging.cc
+===================================================================
+--- glog-0.3.3/src/logging.cc	2013-01-22 23:26:35.000000000 -0600
++++ glog-0.3.3.new/src/logging.cc	2014-10-17 11:37:02.612151465 -0500
+@@ -87,6 +87,9 @@
+ using std::fdopen;
+ #endif
+ 
++// ISCO Modifications to log format
++#define ISCO_LOG_FORMAT
++
+ // There is no thread annotation support.
+ #define EXCLUSIVE_LOCKS_REQUIRED(mu)
+ 
+@@ -1026,8 +1029,12 @@
+                        << setw(2) << tm_time.tm_sec << '\n'
+                        << "Running on machine: "
+                        << LogDestination::hostname() << '\n'
++#ifndef ISCO_LOG_FORMAT
+                        << "Log line format: [IWEF]mmdd hh:mm:ss.uuuuuu "
+                        << "threadid file:line] msg" << '\n';
++#else
++                       << '\n';
++#endif
+     const string& file_header_string = file_header_stream.str();
+ 
+     const int header_len = file_header_string.size();
+@@ -1207,19 +1214,38 @@
+   //    (log level, GMT month, date, time, thread_id, file basename, line)
+   // We exclude the thread_id for the default thread.
+   if (FLAGS_log_prefix && (line != kNoLogPrefix)) {
+-    stream() << LogSeverityNames[severity][0]
+-             << setw(2) << 1+data_->tm_time_.tm_mon
+-             << setw(2) << data_->tm_time_.tm_mday
+-             << ' '
+-             << setw(2) << data_->tm_time_.tm_hour  << ':'
+-             << setw(2) << data_->tm_time_.tm_min   << ':'
+-             << setw(2) << data_->tm_time_.tm_sec   << "."
+-             << setw(6) << usecs
+-             << ' '
+-             << setfill(' ') << setw(5)
+-             << static_cast<unsigned int>(GetTID()) << setfill('0')
+-             << ' '
+-             << data_->basename_ << ':' << data_->line_ << "] ";
++#ifdef ISCO_LOG_FORMAT
++      // ISCO Modified Log Format  Example:
++      //    2014-10-17 10:33:42.123456 INFO: Log Message
++      //    1) Full severity name instead of one letter
++      //    2) Add year to the date, and start the line with it
++      //    3) Remove filename and line number
++      stream() << setw(4) << 1900 + data_->tm_time_.tm_year << '-'
++               << setw(2) << 1+data_->tm_time_.tm_mon << '-'
++               << setw(2) << data_->tm_time_.tm_mday
++               << ' '
++               << setw(2) << data_->tm_time_.tm_hour  << ':'
++               << setw(2) << data_->tm_time_.tm_min   << ':'
++               << setw(2) << data_->tm_time_.tm_sec   << "."
++               << setw(6) << usecs << ':'
++               << ' '
++               << LogSeverityNames[severity] << ':'
++               << ' ';
++#else
++       stream() << LogSeverityNames[severity][0]
++                << setw(2) << 1+data_->tm_time_.tm_mon
++                << setw(2) << data_->tm_time_.tm_mday
++                << ' '
++                << setw(2) << data_->tm_time_.tm_hour  << ':'
++                << setw(2) << data_->tm_time_.tm_min   << ':'
++                << setw(2) << data_->tm_time_.tm_sec   << "."
++                << setw(6) << usecs
++                << ' '
++                << setfill(' ') << setw(5)
++                << static_cast<unsigned int>(GetTID()) << setfill('0')
++                << ' '
++                << data_->basename_ << ':' << data_->line_ << "] ";
++#endif
+   }
+   data_->num_prefix_chars_ = data_->stream_->pcount();
+ 

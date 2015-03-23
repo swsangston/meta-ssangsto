@@ -1,0 +1,41 @@
+#!/bin/sh
+# ISCO: adapted from Busybox source code examples
+
+# Note that there is no provision to prevent several copies of the script
+# to be run in quick succession. In fact, it happens rather often
+# if initial syncronization results in a step.
+# You will see "step" and then "stratum" script runs, sometimes
+# as close as only 0.002 seconds apart.
+#
+# Script should be ready to deal with this.
+
+dt=`date '+%Y-%m-%d %H:%M:%S'`
+
+LOGDIR=/var/log
+LOGFILE="$LOGDIR/ntp.log"
+
+if test x"$stratum" != x"" \
+&& test x"$poll_interval" != x"" \
+&& test 4 -ge "$stratum" \
+&& test 128 -le "$poll_interval" \
+; then
+	echo "`tail -n 199 -- "$LOGFILE" 2>/dev/null`" >"$LOGFILE.$$"
+	echo "$dt: $1"\
+		"freq_drift_ppm=$freq_drift_ppm"\
+		"offset=$offset"\
+		"stratum=$stratum"\
+		"poll_interval=$poll_interval,"\
+		"setting hardware clock"\
+		>>"$LOGFILE.$$"
+	mv -- "$LOGFILE.$$" "$LOGFILE"
+	exec hwclock --systohc
+fi
+
+echo "`tail -n 199 -- "$LOGFILE" 2>/dev/null`" >"$LOGFILE.$$"
+echo "$dt: $1"\
+	"freq_drift_ppm=$freq_drift_ppm"\
+	"offset=$offset"\
+	"stratum=$stratum"\
+	"poll_interval=$poll_interval"\
+	>>"$LOGFILE.$$"
+mv -- "$LOGFILE.$$" "$LOGFILE"

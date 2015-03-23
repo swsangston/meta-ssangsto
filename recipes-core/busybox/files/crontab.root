@@ -1,0 +1,2 @@
+# root crontab: edit with "crontab -c <this_dir> -e"
+0 */2 * * * /usr/local/bin/logcleanup
