@@ -1,0 +1,36 @@
+#!/bin/sh
+# Program U-Boot into eMMC
+#
+if [ $# -ne 1 ]; then
+    echo "usage: $0 <bootdev>"
+    echo "  e.g. bootdev = 1 for mmcblk1 device"
+    exit 1
+fi
+
+DRIVE=mmcblk$1
+DEVICE=/dev/$DRIVE
+UBOOTFILE=/tmp/u-boot.imx
+
+# Disable read-only
+echo 0 > /sys/block/"$DRIVE"boot0/force_ro || exit 1
+
+# Erase boot region
+echo "Erase Boot Block"
+dd if=/dev/zero of="$DEVICE"boot0 2>/dev/null
+
+# Copy U-Boot
+echo "Copy U-Boot to Boot Block"
+dd if=$UBOOTFILE of="$DEVICE"boot0 bs=512 seek=2 || exit 1
+sync
+
+# Re-enable read-only
+echo 1 > /sys/block/"$DRIVE"boot0/force_ro || exit 1
+
+# Set boot bus size to 4-bit
+echo 1 > /sys/block/"$DRIVE"/device/boot_bus_config || exit 1
+
+# Enable boot partition 1 to boot
+echo 8 > /sys/block/"$DRIVE"/device/boot_config || exit 1
+
+echo "SUCCESS!"
+#echo "Note: Must power off board for boot settings to take effect"

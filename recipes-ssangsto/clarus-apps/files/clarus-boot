@@ -1,0 +1,35 @@
+#!/bin/sh
+# Clarus pre-application boot script
+# Run from rcS.d at startup before any daemons or apps
+PATH=/usr/local/bin:/usr/sbin:/sbin:$PATH
+
+# Mount the logs directory on 2nd MMC device if present
+LOGPART=/dev/mmcblk1p1
+if grep -qs "$LOGPART" /proc/mounts; then
+    LOGDIR=/logs
+else
+    LOGDIR=/home/root/log
+fi
+
+# Make log directories
+# Use bind mounts instead of symlinks to be visible through FTP chroot
+mkdir -p $LOGDIR/clarus $LOGDIR/anf $LOGDIR/coredump 
+mkdir -p /var/log/clarus /var/log/anf /var/log/coredump
+mount --bind $LOGDIR/clarus /var/log/clarus
+mount --bind $LOGDIR/anf /var/log/anf
+mount --bind $LOGDIR/coredump /var/log/coredump
+
+# Enable core dumps with process name
+echo /var/log/coredump/core.%e >/proc/sys/kernel/core_pattern
+
+# create some directories in data partition
+mkdir -p /home/root/conf
+mkdir -p /home/root/images
+mkdir -p /home/root/bin
+mkdir -p /home/root/uploads
+chown iscoeng:iscoeng /home/root/uploads
+mkdir -p /home/root/hwtest
+chown iscoeng:iscoeng /home/root/hwtest
+
+# Set timezone for accurate logs before config is restored
+network_cfg.py timezone >/dev/null 2>&1

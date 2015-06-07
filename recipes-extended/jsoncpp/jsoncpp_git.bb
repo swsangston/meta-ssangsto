@@ -4,12 +4,12 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=c56ee55c03a55f8105b969d8270632ce"
 #DEPENDS =
 
-# Version 1.0.0 Git commit
-SRCREV = "7165f6ac4c482e68475c9e1dac086f9e12fff0d0"
+# Version 1.6.2 Git commit
+SRCREV = "24682e37bf1425455b45e7db69dbdbcd30aec7dd"
 SRC_URI = "git://github.com/open-source-parsers/jsoncpp.git"
 
 # Must change PR whenever the SRCREV is changed
-PR = "r1"
+PR = "r2"
 
 S = "${WORKDIR}/git"
 

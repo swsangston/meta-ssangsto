@@ -1,0 +1,47 @@
+#!/bin/sh
+# Update kernel images in boot partition if required
+# Kernel images include uImage, DTB, and initramfs.
+#
+# To get the image into /tmp/kernimg from uploads dir, run:
+#  tar -xvzf ~root/uploads/kernel.tgz -C /tmp
+#
+BOOTDEV=mmcblk0p1
+BOOTPART=/dev/$BOOTDEV
+BOOTDIR=/media/$BOOTDEV
+IMGSAVEDIR=/tmp/kernimg
+
+mkdir -p $BOOTDIR
+umount $BOOTPART 2>/dev/null
+mount -t vfat $BOOTPART $BOOTDIR
+if [ $? -ne 0 ]; then 
+    echo "partition mount failed!"
+    exit 1; 
+fi
+
+cd $IMGSAVEDIR
+if [ $? -ne 0 ]; then 
+    echo "cd to $IMGSAVEDIR failed"
+    exit 2; 
+fi
+
+# Save files to boot partition if they changed
+for f in *; do
+    cmp -s $f $BOOTDIR/$f
+    if [ $? -ne 0 ]; then 
+        echo "Updating kernel file $f ..."
+
+        # backup existing file
+        mkdir -p $BOOTDIR/backup
+        cp $BOOTDIR/$f $BOOTDIR/backup 2>/dev/null       
+        
+        cp $f $BOOTDIR
+        if [ $? -ne 0 ]; then 
+            echo "$f copy failed!"
+            exit 3; 
+        fi
+        
+        echo "Success"
+    fi
+done
+
+umount $BOOTDIR

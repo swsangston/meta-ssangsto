@@ -1,0 +1,62 @@
+#!/bin/sh
+#
+# Format Clarus eMMC partitions and flash all images to them from SD card.
+# For manufacturing or lab use only.
+#
+# This script should be run from initial RAM disk with the SD card inserted.
+# It assumes SD card is mmcblk0, and eMMC devices are mmcblk1 and mmcblk2.
+# 
+# All firmware images and kernel reside in SD card FAT partition 1.
+
+while true; do
+    echo "This script will reformat the eMMC flash devices and replace all firmware images!"
+    read -p "Continue (y/n)? " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
+
+# Check if 3 MMC devices exist (if SD card is inserted)
+grep -q mmcblk2 /proc/partitions
+if [ $? -ne 0 ]; then
+    echo "SD card with firmware images was not found"
+    echo "Please insert SD card and power-cycle the board"
+    exit 1
+fi
+
+IMGDIR=/media/mmcblk0p1/images
+
+echo "Extract controller image"
+tar -xzvf $IMGDIR/controller.tgz -C /tmp || exit 1
+
+echo "Extract kernel images"
+cd /tmp/images
+tar -xzvf kernel.tgz || exit 1
+
+echo "Making eMMC partitions ..."
+flashmmc 1 2 /tmp/images/kernimg || exit 1
+
+echo "Programming Root FS ..."
+dd if=/tmp/images/rootfs.ext3 of=/dev/mmcblk1p2 bs=1024 || exit 1
+sync
+
+# Select active root FS
+ROOTDIR=/media/mmcblk1p4
+mount /dev/mmcblk1p4 $ROOTDIR
+mkdir -p $ROOTDIR/images
+echo "/dev/mmcblk0p2" > $ROOTDIR/images/rootfsdev
+
+if [ -e $IMGDIR/u-boot.imx ]; then
+    echo "Programming U-Boot ..."
+    cp $IMGDIR/u-boot.imx /tmp/
+    uboot2emmc 1 || exit 1
+    rm -fr /tmp/u-boot.imx
+fi    
+
+sync
+
+echo "SUCCESS!"
+echo "To boot with new image: "
+echo "Power down the board. Extract the SD card and change DIP switch to boot from eMMC."

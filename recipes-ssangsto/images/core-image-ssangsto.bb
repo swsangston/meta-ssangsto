@@ -45,6 +45,12 @@ IMAGE_INSTALL += "\
     my-apps \
     "
 
+# ISCO International Testing
+IMAGE_INSTALL += " \
+    clarus-apps \
+    isco-fsutils \
+"
+
 # iperf : not in standard Yocto: may be in meta-openembedded
 # net-snmp-server : not in standard Yocto
 # busybox-cron : Unix cron is already installed (incompatible)

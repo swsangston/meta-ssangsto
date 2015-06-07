@@ -1,0 +1,69 @@
+#!/bin/sh
+# ISCO utility: Update Root Filesystem 
+#
+# Updates the root FS by copying it to the partition
+# where root isn't mounted, and notifying the initramfs
+# to select it after reboot.
+#
+# Image file is at ~root/images/rootfs.ext3 by default.
+# Pass this script an optional filename arg to override it.
+# MMC device to update may also be overridden with 2nd argument.
+#
+BOOTPART=mmcblk0p1
+BOOTMOUNT=/media/$BOOTPART
+ROOTPARTA=mmcblk0p2
+ROOTPARTB=mmcblk0p3
+
+IMGSAVEDIR=/home/root/images
+IMGNAME=rootfs.ext3
+IMGFILE=$IMGSAVEDIR/$IMGNAME
+
+if [ -n "$1" ]; then
+    IMGFILE=$1
+fi
+
+if [ -n "$2" ]; then
+    MMCDEV=$2
+else
+    # Save image in partition that isn't currently the root device
+    is_parta_root=`/usr/sbin/rdev | grep -c $ROOTPARTA`
+    is_partb_root=`/usr/sbin/rdev | grep -c $ROOTPARTB`
+
+    if [ $is_parta_root -eq 1 ]; then
+       MMCDEV=/dev/$ROOTPARTB
+    elif [ $is_partb_root -eq 1 ]; then
+       MMCDEV=/dev/$ROOTPARTA 
+    else
+       echo "Error: Did not find valid mount partition"
+       exit 1
+    fi
+fi
+
+date
+echo "Updating $MMCDEV with $IMGFILE ..."
+
+# Copy image into the flash partition
+umount $MMCDEV 2>/dev/null
+dd if=$IMGFILE of=$MMCDEV bs=1024 >/tmp/ddout 2>&1
+
+if [ $? -ne 0 ]; then 
+    echo "Filesystem copy failed!"
+    exit 2
+fi 
+
+sync
+
+# Set file for initramfs to select the partition
+echo "$MMCDEV" > $IMGSAVEDIR/rootfsdev
+
+# Verify FS
+# Do this after rootfs selection since it may fail with "superblock 
+# date in the future" if the date is earlier than the rootfs build date.
+/sbin/e2fsck -p $MMCDEV 2>&1
+FSERROR=$?
+if [ $FSERROR -gt 1 ]; then
+    echo "Filesystem check failed ($FSERROR)"
+	exit 3
+else
+    echo "Root FS Update Success"
+fi

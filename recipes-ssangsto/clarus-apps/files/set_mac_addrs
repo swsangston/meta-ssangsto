@@ -1,0 +1,12 @@
+#!/bin/sh
+# Read MAC addresses from kernel command line
+PATH=/usr/sbin:/sbin:$PATH
+
+grep -q ethaddr /proc/cmdline
+if [ $? -eq 0 ]; then
+    ETH0_ADDR=`cat /proc/cmdline | sed -n 's/.*ethaddr=*/\1/p' | awk '{print $1}'`
+    ETH1_ADDR=`cat /proc/cmdline | sed -n 's/.*eth1addr=*/\1/p' | awk '{print $1}'`
+    
+    ifconfig eth0 hw ether $ETH0_ADDR
+    ifconfig eth1 hw ether $ETH1_ADDR
+fi

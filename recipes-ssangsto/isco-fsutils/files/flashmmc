@@ -1,0 +1,41 @@
+#!/bin/sh
+# ISCO: Create filesystems on Clarus eMMC devices 
+# and copy kernel images to its boot partition.
+#
+# flashmmc [devnum1] [devnum2] [imagedir]
+#   devnum1 is the main partition number
+#   devnum2 is the log partition number
+#   imagedir is directory with kernel image files
+#
+# Defaults assume running from SD card at
+# mmcblk0, flashing eMMCs at mmcblk1 and mmcblk2.
+DEVNODE1="/dev/mmcblk1"
+if [ -n "$1" ]; then
+    DEVNODE1=/dev/mmcblk"$1"
+fi
+
+DEVNODE2="/dev/mmcblk2"
+if [ -n "$2" ]; then
+    DEVNODE2=/dev/mmcblk"$2"
+fi
+
+IMGDIR=/media/mmcblk0p1
+if [ -n "$3" ]; then
+   IMGDIR=$3
+fi
+
+# Make main eMMC partitions
+mkmmcparts $DEVNODE1 || exit
+
+# Populate the boot images
+mkdir -p /media/bootmnt
+mount -t vfat $DEVNODE1"p1" /media/bootmnt || exit 1
+cp $IMGDIR/uImage* /media/bootmnt
+cp $IMGDIR/initramfs* /media/bootmnt
+cp $IMGDIR/*.dtb /media/bootmnt
+
+umount /media/bootmnt
+
+# Make eMMC log partition
+mkmmc2parts $DEVNODE2 || exit
+

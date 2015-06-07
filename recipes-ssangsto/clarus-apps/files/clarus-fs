@@ -1,0 +1,4 @@
+#!/bin/sh
+# Make mount points before partitions are mounted
+mkdir -p /logs
+#mkdir -p /ramlog

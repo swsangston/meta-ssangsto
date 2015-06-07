@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+PATH=/usr/local/bin:/usr/sbin:/sbin:$PATH
+
+case "$1" in
+  start)
+    STARTMSG=" ISCO: Start Clarus Controller"
+    echo $STARTMSG
+    logger -p user.info $STARTMSG
+
+    # printk only warnings and above to console
+    echo "3 4 1 7" >/proc/sys/kernel/printk
+
+    # enable full core dumps
+    ulimit -c unlimited
+    
+    # Start the watchdog daemon
+    start-stop-daemon -S -x watchdog
+
+    # Start interface plug daemon
+    # TODO: enable eth0 when ready on Clarus rev 3
+    #start-stop-daemon -S -x ifplugd -- -i eth0 -r /etc/ifplugd.action
+    start-stop-daemon -S -x ifplugd -- -i eth1 -r /etc/ifplugd.action
+
+    # Start Clarus Services daemon
+    start-stop-daemon -S -x clarusd -- -d
+        
+    ;;
+  stop)
+    STOPMSG=" ISCO: Stop Clarus Controller"
+    echo $STOPMSG
+    logger -p user.info $STOPMSG
+
+    start-stop-daemon -K -x clarusd
+    
+    ;;
+  *)
+    echo "Usage: $0 {start|stop}"
+    exit 1
+esac

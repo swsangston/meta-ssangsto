@@ -1,0 +1,21 @@
+#!/bin/sh
+# ISCO Root FS Recovery Utility
+# 	Copies root FS ext3 file to root partition A on mmcblk 0.
+# 	rootfs.ext3 is in current directory, and selects that root FS.
+ROOTPARTA=mmcblk0p2
+DATAPART=mmcblk0p4
+if [ -z "$IMGSAVEDIR" ]; then
+	IMGSAVEDIR=/media/$DATAPART/images
+fi
+
+if [ ! -d "$IMGSAVEDIR" ]; then
+	echo "Image save directory $IMGSAVEDIR doesn't exist!"
+	echo "Invoke with IMGSAVEDIR env variable set to its correct location"
+	exit 1
+fi
+
+echo "Copying Root FS to Partition A"
+dd if=rootfs.ext3 of=/dev/$ROOTPARTA bs=1024
+
+echo "/dev/$ROOTPARTA" > $IMGSAVEDIR/rootfsdev
+

@@ -1,0 +1,62 @@
+#!/bin/sh
+# ISCO: Make eMMC #1 partitions for Clarus board
+#
+# Four partitions:
+# Boot: 500M vfat
+# Root A: 2.5G ext4
+# Root B: 2.5G ext4
+# Data: ~2.0G ext4
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <device_node>"
+    exit 1
+fi
+
+node=$1
+
+# Stop udev from automatic mount
+echo "/dev/mmc*" >>/etc/udev/mount.blacklist
+
+umount ${node}p1 2>/dev/null
+umount ${node}p2 2>/dev/null
+umount ${node}p3 2>/dev/null
+umount ${node}p4 2>/dev/null
+
+# U-Boot partition size in MB
+# Not needed for eMMC, but compatible with SD boot
+BOOT_ROM_SIZE=0
+
+# Destroy the partition table
+dd if=/dev/zero of=${node} bs=1024 count=1
+if [ $? -ne 0 ]; then echo "Disk partition clear failed!"; exit 1; fi
+
+# call sfdisk to create partition table
+sfdisk --force -uM ${node} << EOF
+${BOOT_ROM_SIZE},500,0c
+600,2500,83
+3200,2500,83
+5800,,83
+EOF
+
+if [ $? -ne 0 ]; then echo "Disk partitioning failed!"; exit 1; fi
+
+umount ${node}p1 2>/dev/null
+umount ${node}p2 2>/dev/null
+umount ${node}p3 2>/dev/null
+umount ${node}p4 2>/dev/null
+
+dd if=/dev/zero of=${node}p1 bs=512 count=1
+#if [ $? -ne 0 ]; then echo "Boot FS partition clear failed!"; exit 1; fi
+
+mkfs.vfat ${node}p1
+if [ $? -ne 0 ]; then echo "Boot FS make failed!"; exit 1; fi
+
+mkfs.ext4 ${node}p2
+if [ $? -ne 0 ]; then echo "Root FS A make failed!"; exit 1; fi
+
+mkfs.ext4 ${node}p3
+if [ $? -ne 0 ]; then echo "Root FS B make failed!"; exit 1; fi
+
+mkfs.ext4 ${node}p4
+if [ $? -ne 0 ]; then echo "Data FS make failed!"; exit 1; fi
+
+echo "SUCCESS"
