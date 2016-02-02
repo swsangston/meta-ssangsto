@@ -9,8 +9,10 @@ SRC_URI += "file://flashmmc"
 SRC_URI += "file://mkmmcparts"
 SRC_URI += "file://mkmmc2parts"
 SRC_URI += "file://rootfs2parta"
-SRC_URI += "file://update-rootfs"
-SRC_URI += "file://update-kernel"
+
+# bbone: customized in recipes-ssangsto
+#SRC_URI += "file://update-rootfs"
+#SRC_URI += "file://update-kernel"
 SRC_URI += "file://flash_all"
 
 RDEPENDS_isco-fsutils := " \
@@ -30,6 +32,6 @@ do_install() {
     install -m 0755 ${WORKDIR}/flash_all ${D}${sbindir}
 
 	install -d ${D}${bindir}
-	install -m 0755 ${WORKDIR}/update-rootfs ${D}${bindir}
-	install -m 0755 ${WORKDIR}/update-kernel ${D}${bindir}
+#	install -m 0755 ${WORKDIR}/update-rootfs ${D}${bindir}
+#	install -m 0755 ${WORKDIR}/update-kernel ${D}${bindir}
 }

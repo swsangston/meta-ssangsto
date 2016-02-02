@@ -18,6 +18,7 @@ SRC_URI += "file://bin.tgz"
 SRC_URI += "file://lib.tgz"
 SRC_URI += "file://scripts.tgz"
 SRC_URI += "file://html.tgz"
+SRC_URI += "file://mibs.tgz"
 
 # APPSDIR shell environment var points to application base directory
 #FILESEXTRAPATHS_prepend := "${APPSDIR}/pkg:${THISDIR}/files"
@@ -28,6 +29,7 @@ CGIBINDIR = "/www/pages/cgi-bin"
 HTMLDIR = "/www/pages"
 TESTDIR = "/www/pages/test"
 RESETDIR = "/www/pages/reset"
+MIBSDIR = "/usr/share/snmp/mibs"
 
 # Task to clean up previously extracted tarballs from working directory
 # in case apps dir contents have changed.
@@ -45,6 +47,9 @@ do_preunpack() {
 	if [ -d "${WORKDIR}/html" ]; then
         rm -rf ${WORKDIR}/html
     fi
+    if [ -d "${WORKDIR}/mibs" ]; then
+        rm -rf ${WORKDIR}/mibs
+    fi
 }
 
 do_install() {
@@ -60,9 +65,12 @@ do_install() {
     install -d ${D}${libdir}
     install -d ${D}/www ${D}${HTMLDIR} ${D}${CGIBINDIR} ${D}${TESTDIR} ${D}${RESETDIR}
     install -d ${D}${HTMLDIR}/_images ${D}${HTMLDIR}/_includes ${D}${HTMLDIR}/_library ${D}${HTMLDIR}/js ${D}${HTMLDIR}/js/images
+    install -d ${D}${MIBSDIR}
 
     # Add Git SHA1 to /etc
-    git rev-parse HEAD > ${D}${sysconfdir}/git-sha1
+    #git rev-parse HEAD > ${D}${sysconfdir}/git-sha1
+    # bbone change
+    echo "00000" > ${D}${sysconfdir}/git-sha1 
 
     # Install programs and libraries
 	rm -f ${WORKDIR}/bin/.gitignore
@@ -133,10 +141,14 @@ do_install() {
         done
     fi
 
+    # MIBs
+    for f in ${WORKDIR}/mibs/*; do
+        install -m 0644 ${f} ${D}${MIBSDIR}
+    done
 }
 
 # Add /usr/local/bin to packaging paths
-FILES_${PN} += "${USRLOCDIR}/bin/* ${libdir}/* ${CGIBINDIR}/* ${HTMLDIR}/* ${HTMLDIR}/_images/* ${HTMLDIR}/_includes/* ${HTMLDIR}/_library/* ${HTMLDIR}/js/* ${HTMLDIR}/js/images/* ${HTMLDIR}/reset/* ${HTMLDIR}/test/*"
+FILES_${PN} += "${USRLOCDIR}/bin/* ${libdir}/* ${CGIBINDIR}/* ${HTMLDIR}/* ${HTMLDIR}/_images/* ${HTMLDIR}/_includes/* ${HTMLDIR}/_library/* ${HTMLDIR}/js/* ${HTMLDIR}/js/images/* ${HTMLDIR}/reset/* ${HTMLDIR}/test/* ${MIBSDIR}/*"
 FILES_${PN}-dbg += "${USRLOCDIR}/bin/.debug/* ${libdir}/.debug/*"
 PACKAGES = "${PN} ${PN}-dbg"
 

@@ -30,6 +30,8 @@ do_install_append() {
     install -m 0600 ${WORKDIR}/lighttpd.pem ${D}${sysconfdir}/lighttpd/lighttpd.pem
     install -m 0666 ${WORKDIR}/admin.user ${D}${sysconfdir}/lighttpd/admin.user
     ln -s /home/root/uploads ${D}/www/uploads
+    ln -s /var/log ${D}/www/pages/log
     rm -f ${D}/www/pages/index.html
 }
 
+FILES_${PN} += "${sysconfdir}"

@@ -35,6 +35,7 @@ IMAGE_INSTALL += "\
 	nano \
 	watchdog \
 	glog \
+    protobuf \
     jsoncpp \
     zeromq \
     czmq \
@@ -42,17 +43,20 @@ IMAGE_INSTALL += "\
     python-json \
     python-pyzmq \
     python-pydoc \
+    python-core \
+    python-multiprocessing \
+    net-snmp-server \
+    net-snmp-client \
     my-apps \
     "
 
 # ISCO International Testing
+# isco-fsutils not needed (target-specific)
 IMAGE_INSTALL += " \
     clarus-apps \
-    isco-fsutils \
 "
 
 # iperf : not in standard Yocto: may be in meta-openembedded
-# net-snmp-server : not in standard Yocto
 # busybox-cron : Unix cron is already installed (incompatible)
 # python-modules : include all Poky Python modules
 

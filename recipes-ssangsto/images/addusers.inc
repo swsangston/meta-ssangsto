@@ -12,6 +12,7 @@ inherit extrausers
 # DES encryption must be used since other methods are machine-dependent.
 EXTRA_USERS_PARAMS = "\
     useradd -d /var/log -s /sbin/nologin -p 'O2yhBCJFx2VoI' admin; \
+    useradd -p 'DnO3l8kEsv9bo' iscoeng; \
     useradd -p 'DnO3l8kEsv9bo' steve; \
     " 
     
