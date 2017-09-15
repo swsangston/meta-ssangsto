@@ -45,6 +45,9 @@ IMAGE_INSTALL += "\
     python-pydoc \
     python-core \
     python-multiprocessing \
+    python-syslog \
+    python-misc \
+    python-pkgutil \
     net-snmp-server \
     net-snmp-client \
     my-apps \
